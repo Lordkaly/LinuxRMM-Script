@@ -88,7 +88,7 @@ go_install() {
         rm -rf /usr/local/go/
         tar -xzf /tmp/golang.tar.gz -C /usr/local/
         rm /tmp/golang.tar.gz
-        export PATH=$PATH:/usr/local/go/bin
+        export PATH=/usr/local/go/bin:$PATH
         echo "Go $go_version installed."
     else
         go_current_version=$(go version | awk '{print $3}' | sed 's/go//')
@@ -103,11 +103,15 @@ go_install() {
             rm -rf /usr/local/go/
             tar -xzf /tmp/golang.tar.gz -C /usr/local/
             rm /tmp/golang.tar.gz
-            export PATH=$PATH:/usr/local/go/bin
+            export PATH=/usr/local/go/bin:$PATH
             echo "Go $go_version installed."
         else
             echo "Go is up to date (version $go_current_version)."
         fi
+    fi
+    # Verifica se o Go está funcionando
+    if ! go version &>/dev/null; then
+        error_exit "Go installation failed or not found in PATH!"
     fi
 }
 
@@ -118,6 +122,9 @@ agent_compile() {
     tar -xf /tmp/rmmagent.tar.gz -C /tmp/ || error_exit "Failed to extract rmmagent!"
     rm /tmp/rmmagent.tar.gz
     cd /tmp/rmmagent-2.9.0 || error_exit "Directory /tmp/rmmagent-2.9.0 not found!"
+    
+    # Força o PATH para usar o Go instalado
+    export PATH=/usr/local/go/bin:$PATH
     
     # Verifica o ambiente Go
     echo "Go version: $(go version)"
@@ -130,6 +137,10 @@ agent_compile() {
     echo "Cleaning Go module cache..."
     go clean -modcache || echo "Warning: Failed to clean Go module cache, proceeding anyway..."
 
+    # Atualiza o go.mod para Go 1.22
+    echo "Updating go.mod to use Go $go_version..."
+    sed -i 's/go 1\.[0-9]\+/go 1.22/' go.mod || echo "Warning: Failed to update go.mod, proceeding anyway..."
+    
     # Remove o go.sum existente para evitar conflitos
     echo "Removing existing go.sum to force refresh..."
     rm -f go.sum
@@ -210,7 +221,7 @@ check_profile() {
         echo "Fixing PATH variable"
         echo "export PATH=\$PATH:/usr/local/go/bin" >> "$profile_file"
     fi
-    export PATH=$PATH:/usr/local/go/bin
+    export PATH=/usr/local/go/bin:$PATH
 }
 
 # Função para desinstalar o agente

@@ -61,16 +61,14 @@ function agent_compile() {
     rm /tmp/rmmagent.tar.gz
     cd /tmp/rmmagent-master || exit 1
 
-    # Limpa o cache e remove o go.sum para evitar validação de checksum
-    echo "Cleaning Go module cache and removing go.sum..."
+    # Limpa o cache, mas evita go mod tidy para prevenir erros de dependências
+    echo "Cleaning Go module cache..."
     go clean -modcache
-    rm -f go.sum
-    go mod tidy -v
 
     # Desativa validação de checksum remoto
     export GOSUMDB=off
 
-    # Compila para Linux
+    # Compila diretamente, ignorando resolução completa de dependências
     echo "Building agent for $system..."
     case $system in
         amd64)

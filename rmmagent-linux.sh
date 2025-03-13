@@ -77,8 +77,8 @@ go_url_armv6="https://go.dev/dl/go$go_version.linux-armv6l.tar.gz"
 
 # Função para instalar Go
 go_install() {
-    if ! command -v go &>/dev/null; then
-        echo "Installing Go $go_version..."
+    if ! /usr/local/go/bin/go version &>/dev/null || ! /usr/local/go/bin/go version | grep -q "go$go_version"; then
+        echo "Installing or updating Go to $go_version..."
         case $system in
             amd64) wget -O /tmp/golang.tar.gz "$go_url_amd64" ;;
             x86) wget -O /tmp/golang.tar.gz "$go_url_x86" ;;
@@ -91,28 +91,13 @@ go_install() {
         export PATH=/usr/local/go/bin:$PATH
         echo "Go $go_version installed."
     else
-        go_current_version=$(go version | awk '{print $3}' | sed 's/go//')
-        if [ "$go_current_version" != "$go_version" ]; then
-            echo "Updating Go to $go_version (current: $go_current_version)..."
-            case $system in
-                amd64) wget -O /tmp/golang.tar.gz "$go_url_amd64" ;;
-                x86) wget -O /tmp/golang.tar.gz "$go_url_x86" ;;
-                arm64) wget -O /tmp/golang.tar.gz "$go_url_arm64" ;;
-                armv6) wget -O /tmp/golang.tar.gz "$go_url_armv6" ;;
-            esac
-            rm -rf /usr/local/go/
-            tar -xzf /tmp/golang.tar.gz -C /usr/local/
-            rm /tmp/golang.tar.gz
-            export PATH=/usr/local/go/bin:$PATH
-            echo "Go $go_version installed."
-        else
-            echo "Go is up to date (version $go_current_version)."
-        fi
+        echo "Go is up to date (version $go_version)."
     fi
     # Verifica se o Go está funcionando
-    if ! go version &>/dev/null; then
-        error_exit "Go installation failed or not found in PATH!"
+    if ! /usr/local/go/bin/go version &>/dev/null; then
+        error_exit "Go installation failed or not found in /usr/local/go/bin!"
     fi
+    echo "Go version after install: $(/usr/local/go/bin/go version)"
 }
 
 # Função para compilar o agente
@@ -127,15 +112,15 @@ agent_compile() {
     export PATH=/usr/local/go/bin:$PATH
     
     # Verifica o ambiente Go
-    echo "Go version: $(go version)"
+    echo "Go version: $(/usr/local/go/bin/go version)"
     echo "Current PATH: $PATH"
-    if ! command -v go &>/dev/null; then
-        error_exit "Go is not installed or not found in PATH!"
+    if ! /usr/local/go/bin/go version &>/dev/null; then
+        error_exit "Go is not installed or not found in /usr/local/go/bin!"
     fi
     
     # Tenta limpar o cache do Go, mas continua se falhar
     echo "Cleaning Go module cache..."
-    go clean -modcache || echo "Warning: Failed to clean Go module cache, proceeding anyway..."
+    /usr/local/go/bin/go clean -modcache || echo "Warning: Failed to clean Go module cache, proceeding anyway..."
 
     # Atualiza o go.mod para Go 1.22
     echo "Updating go.mod to use Go $go_version..."
@@ -147,18 +132,18 @@ agent_compile() {
     
     # Inicializa o módulo e baixa dependências com saída detalhada
     echo "Tidying Go modules (verbose output)..."
-    go mod tidy -v 2>&1 || error_exit "Failed to tidy Go modules after resetting go.sum! See output above for details."
+    /usr/local/go/bin/go mod tidy -v 2>&1 || error_exit "Failed to tidy Go modules after resetting go.sum! See output above for details."
     
     echo "Downloading Go dependencies..."
-    go mod download -x || error_exit "Failed to download Go dependencies!"
+    /usr/local/go/bin/go mod download -x || error_exit "Failed to download Go dependencies!"
     
     # Compilação
     echo "Building agent..."
     case $system in
-        amd64) env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
-        x86) env CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
-        arm64) env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
-        armv6) env CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
+        amd64) env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 /usr/local/go/bin/go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
+        x86) env CGO_ENABLED=0 GOOS=linux GOARCH=386 /usr/local/go/bin/go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
+        arm64) env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 /usr/local/go/bin/go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
+        armv6) env CGO_ENABLED=0 GOOS=linux GOARCH=arm /usr/local/go/bin/go build -ldflags "-s -w" -o /tmp/temp_rmmagent ;;
     esac
     [ ! -f /tmp/temp_rmmagent ] && error_exit "Compilation failed: /tmp/temp_rmmagent not created!"
     

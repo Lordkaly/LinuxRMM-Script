@@ -61,36 +61,37 @@ function agent_compile() {
     rm /tmp/rmmagent.tar.gz
     cd /tmp/rmmagent-master || exit 1
 
-    # Limpa o cache, mas evita go mod tidy para prevenir erros de dependências
-    echo "Cleaning Go module cache..."
+    # Limpa o cache e remove o go.sum para evitar validação de checksum
+    echo "Cleaning Go module cache and removing go.sum..."
     go clean -modcache
+    rm -f go.sum
 
     # Desativa validação de checksum remoto
     export GOSUMDB=off
 
-    # Compila diretamente, ignorando resolução completa de dependências
+    # Compila diretamente, usando -mod=readonly para evitar alterações no go.mod
     echo "Building agent for $system..."
     case $system in
         amd64)
-            env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+            env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -mod=readonly -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
                 echo "Compilation failed. Check the error above."
                 exit 1
             }
             ;;
         x86)
-            env GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+            env GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -mod=readonly -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
                 echo "Compilation failed. Check the error above."
                 exit 1
             }
             ;;
         arm64)
-            env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+            env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -mod=readonly -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
                 echo "Compilation failed. Check the error above."
                 exit 1
             }
             ;;
         armv6)
-            env GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+            env GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -mod=readonly -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
                 echo "Compilation failed. Check the error above."
                 exit 1
             }

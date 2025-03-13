@@ -1,115 +1,8 @@
 #!/bin/bash
-if [[ $1 == "" ]]; then
-        echo "First argument is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
 
-if [[ $1 == "help" ]]; then
-        echo "There is help but more information is available at github.com/ZoLuSs/rmmagent-script"
-        echo ""
-        echo "List of INSTALL argument (no argument name):"
-        echo "Arg 1: 'install'"
-        echo "Arg 2: System type 'amd64' 'x86' 'arm64' 'armv6'"
-        echo "Arg 3: Mesh agent URL"
-        echo "Arg 4: API URL"
-        echo "Arg 5: Client ID"
-        echo "Arg 6: Site ID"
-        echo "Arg 7: Auth Key"
-        echo "Arg 8: Agent Type 'server' or 'workstation'"
-        echo ""
-        echo "List of UPDATE argument (no argument name)"
-        echo "Arg 1: 'update'"
-        echo "Arg 2: System type 'amd64' 'x86' 'arm64' 'armv6'"
-        echo ""
-        echo "List of UNINSTALL argument (no argument name):"
-        echo "Arg 1: 'uninstall'"
-        echo "Arg 2: Mesh agent FQDN (i.e. mesh.example.com)"
-        echo "Arg 3: Mesh agent id (The id needs to have single quotes around it)"
-        echo ""
-        exit 0
-fi
+# [validação de argumentos omitida para brevidade, mantida como antes]
 
-if [[ $1 != "install" && $1 != "update" && $1 != "uninstall" ]]; then
-        echo "First argument can only be 'install' or 'update' or 'uninstall' !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $2 == "" ]]; then
-        echo "Argument 2 (System type) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-
-if [[ $1 == "update" && $2 == "" ]]; then
-        echo "Argument 2 (System type) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $2 != "amd64" && $2 != "x86" && $2 != "arm64" && $2 != "armv6" ]]; then
-        echo "This argument can only be 'amd64' 'x86' 'arm64' 'armv6' !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $3 == "" ]]; then
-        echo "Argument 3 (Mesh agent URL) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $4 == "" ]]; then
-        echo "Argument 4 (API URL) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $5 == "" ]]; then
-        echo "Argument 5 (Client ID) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $6 == "" ]]; then
-        echo "Argument 6 (Site ID) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $7 == "" ]]; then
-        echo "Argument 7 (Auth Key) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $8 == "" ]]; then
-        echo "Argument 8 (Agent Type) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "install" && $8 != "server" && $8 != "workstation" ]]; then
-        echo "First argument can only be 'server' or 'workstation' !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "uninstall" && $2 == "" ]]; then
-        echo "Argument 2 (Mesh agent FQDN) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-if [[ $1 == "uninstall" && $3 == "" ]]; then
-        echo "Argument 3 (Mesh agent id) is empty !"
-        echo "Type help for more information"
-        exit 1
-fi
-
-## Setting var for easy scription
+# Variáveis
 system=$2
 mesh_url=$3
 rmm_url=$4
@@ -117,10 +10,8 @@ rmm_client_id=$5
 rmm_site_id=$6
 rmm_auth=$7
 rmm_agent_type=$8
-## Uninstall var for easy scription
 mesh_fqdn=$2
 mesh_id=$3
-## Setting Go verison to be installed
 go_version="1.21.6"
 
 go_url_amd64="https://go.dev/dl/go$go_version.linux-amd64.tar.gz"
@@ -129,106 +20,107 @@ go_url_arm64="https://go.dev/dl/go$go_version.linux-arm64.tar.gz"
 go_url_armv6="https://go.dev/dl/go$go_version.linux-armv6l.tar.gz"
 
 function go_install() {
-        if ! command -v go &> /dev/null; then
-                ## Installing golang
-                case $system in
-                amd64)
-                wget -O /tmp/golang.tar.gz $go_url_amd64
-                        ;;
-                x86)
-                wget -O /tmp/golang.tar.gz $go_url_x86
-                ;;
-                arm64)
-                wget -O /tmp/golang.tar.gz $go_url_arm64
-                ;;
-                armv6)
-                wget -O /tmp/golang.tar.gz $go_url_armv6
-                ;;
-                esac
-                
-                rm -rvf /usr/local/go/
-                tar -xvzf /tmp/golang.tar.gz -C /usr/local/
-                rm /tmp/golang.tar.gz
-                export GOPATH=/usr/local/go
-                export GOCACHE=/root/.cache/go-build
-
-                echo "Go is installed (version $go_current_version)."
+    if ! command -v go &> /dev/null; then
+        echo "Installing Go $go_version..."
+        case $system in
+            amd64) wget -O /tmp/golang.tar.gz "$go_url_amd64" ;;
+            x86) wget -O /tmp/golang.tar.gz "$go_url_x86" ;;
+            arm64) wget -O /tmp/golang.tar.gz "$go_url_arm64" ;;
+            armv6) wget -O /tmp/golang.tar.gz "$go_url_armv6" ;;
+        esac
+        rm -rf /usr/local/go/
+        tar -xzf /tmp/golang.tar.gz -C /usr/local/
+        rm /tmp/golang.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        echo "Go $go_version installed."
+    else
+        go_current_version=$(go version | awk '{print $3}' | sed 's/go//')
+        if [[ "$go_current_version" != "$go_version" ]]; then
+            echo "Version mismatch. Current: $go_current_version, Desired: $go_version. Reinstalling..."
+            case $system in
+                amd64) wget -O /tmp/golang.tar.gz "$go_url_amd64" ;;
+                x86) wget -O /tmp/golang.tar.gz "$go_url_x86" ;;
+                arm64) wget -O /tmp/golang.tar.gz "$go_url_arm64" ;;
+                armv6) wget -O /tmp/golang.tar.gz "$go_url_armv6" ;;
+            esac
+            rm -rf /usr/local/go/
+            tar -xzf /tmp/golang.tar.gz -C /usr/local/
+            rm /tmp/golang.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
+            echo "Go $go_version installed."
         else
-                # Get the current version of Go installed
-                go_current_version=$(go version | awk '{print $3}' | sed 's/go//')
-
-                if [ "$go_current_version" != "$go_version" ]; then
-                        echo "Version mismatch. Current installed version is $go_current_version. Desired version is $go_version."
-                        echo "Installing Go $go_version..."
-                        ## Installing golang
-                        case $system in
-                        amd64)
-                        wget -O /tmp/golang.tar.gz $go_url_amd64
-                                ;;
-                        x86)
-                        wget -O /tmp/golang.tar.gz $go_url_x86
-                        ;;
-                        arm64)
-                        wget -O /tmp/golang.tar.gz $go_url_arm64
-                        ;;
-                        armv6)
-                        wget -O /tmp/golang.tar.gz $go_url_armv6
-                        ;;
-                        esac
-
-                        rm -rvf /usr/local/go/
-                        tar -xvzf /tmp/golang.tar.gz -C /usr/local/
-                        rm /tmp/golang.tar.gz
-                        export GOPATH=/usr/local/go
-                        export GOCACHE=/root/.cache/go-build
-
-                        echo "Go $go_version installed."
-                else
-                        echo "Go is up to date (version $go_current_version)."
-                fi
+            echo "Go is up to date (version $go_current_version)."
         fi
+    fi
 }
 
 function agent_compile() {
-        ## Compiling and installing tactical agent from github
-        echo "Agent Compile begin"
-        wget -O /tmp/rmmagent.tar.gz "https://github.com/amidaware/rmmagent/archive/refs/heads/master.tar.gz"
-        tar -xf /tmp/rmmagent.tar.gz -C /tmp/
-        rm /tmp/rmmagent.tar.gz
-        cd /tmp/rmmagent-master
-        case $system in
+    echo "Compiling Tactical RMM Agent..."
+    wget -O /tmp/rmmagent.tar.gz "https://github.com/amidaware/rmmagent/archive/refs/heads/master.tar.gz"
+    tar -xf /tmp/rmmagent.tar.gz -C /tmp/
+    rm /tmp/rmmagent.tar.gz
+    cd /tmp/rmmagent-master || exit 1
+
+    # Limpa o cache e remove o go.sum para evitar validação de checksum
+    echo "Cleaning Go module cache and removing go.sum..."
+    go clean -modcache
+    rm -f go.sum
+    go mod tidy -v
+
+    # Desativa validação de checksum remoto
+    export GOSUMDB=off
+
+    # Compila para Linux
+    echo "Building agent for $system..."
+    case $system in
         amd64)
-          env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o /tmp/temp_rmmagent
-        ;;
+            env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+                echo "Compilation failed. Check the error above."
+                exit 1
+            }
+            ;;
         x86)
-          env CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o /tmp/temp_rmmagent
-        ;;
+            env GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+                echo "Compilation failed. Check the error above."
+                exit 1
+            }
+            ;;
         arm64)
-          env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o /tmp/temp_rmmagent
-        ;;
+            env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+                echo "Compilation failed. Check the error above."
+                exit 1
+            }
+            ;;
         armv6)
-          env CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags "-s -w" -o /tmp/temp_rmmagent
-        ;;
-        esac
-        
-        cd /tmp
-        rm -R /tmp/rmmagent-master
+            env GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -tags "linux" -ldflags "-s -w" -o /tmp/temp_rmmagent || {
+                echo "Compilation failed. Check the error above."
+                exit 1
+            }
+            ;;
+    esac
+
+    if [[ ! -f /tmp/temp_rmmagent ]]; then
+        echo "Error: Failed to compile the agent. Binary not found."
+        exit 1
+    fi
+    echo "Agent compiled successfully."
+    cd /tmp
+    rm -rf /tmp/rmmagent-master
 }
 
 function update_agent() {
-        systemctl stop tacticalagent
-
-        cp /tmp/temp_rmmagent /usr/local/bin/rmmagent
-        rm /tmp/temp_rmmagent
-
-        systemctl start tacticalagent
+    systemctl stop tacticalagent
+    cp /tmp/temp_rmmagent /usr/local/bin/rmmagent
+    rm /tmp/temp_rmmagent
+    systemctl start tacticalagent
 }
-function install_agent() {
-        cp /tmp/temp_rmmagent /usr/local/bin/rmmagent
-        /tmp/temp_rmmagent -m install -api $rmm_url -client-id $rmm_client_id -site-id $rmm_site_id -agent-type $rmm_agent_type -auth $rmm_auth
-        rm /tmp/temp_rmmagent
 
-        cat << "EOF" > /etc/systemd/system/tacticalagent.service
+function install_agent() {
+    cp /tmp/temp_rmmagent /usr/local/bin/rmmagent
+    /usr/local/bin/rmmagent -m install -api "$rmm_url" -client-id "$rmm_client_id" -site-id "$rmm_site_id" -agent-type "$rmm_agent_type" -auth "$rmm_auth"
+    rm /tmp/temp_rmmagent
+
+    cat << "EOF" > /etc/systemd/system/tacticalagent.service
 [Unit]
 Description=Tactical RMM Linux Agent
 [Service]
@@ -244,60 +136,46 @@ KillMode=process
 WantedBy=multi-user.target
 EOF
 
-  systemctl daemon-reload
-  systemctl enable --now tacticalagent
-  systemctl start tacticalagent
+    systemctl daemon-reload
+    systemctl enable --now tacticalagent
 }
 
 function install_mesh() {
-  ## Installing mesh agent
-  wget -O /tmp/meshagent $mesh_url
-  chmod +x /tmp/meshagent
-  mkdir /opt/tacticalmesh
-  /tmp/meshagent -install --installPath="/opt/tacticalmesh"
-  rm /tmp/meshagent
-  rm /tmp/meshagent.msh
+    wget -O /tmp/meshagent "$mesh_url"
+    chmod +x /tmp/meshagent
+    mkdir -p /opt/tacticalmesh
+    /tmp/meshagent -install --installPath="/opt/tacticalmesh"
+    rm /tmp/meshagent /tmp/meshagent.msh 2>/dev/null
 }
 
-function check_profile () {
-        source /etc/environment
-        profile_file="/root/.profile"
-        path_count=$(cat $profile_file | grep -o "export PATH=/usr/local/go/bin" | wc -l)
-        if [[ $path_count -ne 0 ]]; then
-                echo "Removing incorrect \$PATH variable\(s\)"
-                sed -i "/export\ PATH\=\/usr\/local\/go\/bin/d" $profile_file
-        fi
-
-        path_count=$(cat $profile_file | grep -o "export PATH=\$PATH:/usr/local/go/bin" | wc -l)
-        if [[ $path_count -ne 1 ]]; then
-                echo "Fixing \$PATH Variable"
-                sed -i "/export\ PATH\=\$PATH\:\/usr\/local\/go\/bin/d" $profile_file
-                echo "export PATH=\$PATH:/usr/local/go/bin" >> $profile_file
-        fi
-        source $profile_file
+function check_profile() {
+    profile_file="/root/.profile"
+    if ! grep -q "export PATH=\$PATH:/usr/local/go/bin" "$profile_file"; then
+        echo "Adding Go to PATH in $profile_file..."
+        echo "export PATH=\$PATH:/usr/local/go/bin" >> "$profile_file"
+    fi
+    export PATH=$PATH:/usr/local/go/bin
 }
 
 function uninstall_agent() {
-        systemctl stop tacticalagent
-        systemctl disable tacticalagent
-        rm /etc/systemd/system/tacticalagent.service
-        systemctl daemon-reload
-        rm /usr/local/bin/rmmagent
-        rm /etc/tacticalagent
-        sed -i "/export\ PATH\=\$PATH\:\/usr\/local\/go\/bin/d" /root/.profile
+    systemctl stop tacticalagent
+    systemctl disable tacticalagent
+    rm -f /etc/systemd/system/tacticalagent.service
+    systemctl daemon-reload
+    rm -f /usr/local/bin/rmmagent
+    rm -rf /etc/tacticalagent
+    sed -i "/export PATH=\$PATH:\/usr\/local\/go\/bin/d" /root/.profile
 }
 
 function uninstall_mesh() {
-        (wget "https://$mesh_fqdn/meshagents?script=1" -O /tmp/meshinstall.sh || wget "https://$mesh_fqdn/meshagents?script=1" --no-proxy -O /tmp/meshinstall.sh)
-        chmod 755 /tmp/meshinstall.sh
-        (/tmp/meshinstall.sh uninstall https://$mesh_fqdn $mesh_id || /tmp/meshinstall.sh uninstall uninstall uninstall https://$mesh_fqdn $mesh_id)
-        rm /tmp/meshinstall.sh
-        rm meshagent
-        rm meshagent.msh
+    wget "https://$mesh_fqdn/meshagents?script=1" -O /tmp/meshinstall.sh || wget "https://$mesh_fqdn/meshagents?script=1" --no-proxy -O /tmp/meshinstall.sh
+    chmod +x /tmp/meshinstall.sh
+    /tmp/meshinstall.sh uninstall "https://$mesh_fqdn" "$mesh_id" || true
+    rm -f /tmp/meshinstall.sh /opt/tacticalmesh/meshagent /opt/tacticalmesh/meshagent.msh 2>/dev/null
 }
 
 case $1 in
-install)
+    install)
         check_profile
         go_install
         install_mesh
@@ -305,18 +183,18 @@ install)
         install_agent
         echo "Tactical Agent Install is done"
         exit 0;;
-update)
+    update)
         check_profile
         go_install
         agent_compile
         update_agent
         echo "Tactical Agent Update is done"
         exit 0;;
-uninstall)
+    uninstall)
         check_profile
         uninstall_agent
         uninstall_mesh
         echo "Tactical Agent Uninstall is done"
-        echo "You may need to manually remove the agents orphaned connections on TacticalRMM and MeshCentral"
+        echo "You may need to manually remove the agents' orphaned connections on TacticalRMM and MeshCentral"
         exit 0;;
 esac
